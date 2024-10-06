@@ -1,3 +1,7 @@
 pelican
 markdown
 ghp-import
+beautifulsoup4
+pelican-search
+pelican-neighbors
+pelican-readtime
