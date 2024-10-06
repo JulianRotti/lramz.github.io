@@ -8,6 +8,7 @@ Summary: Securing a React frontend with Keycloak such that only users with certa
 ## Introduction
 
 In this blog post, I’ll walk you through how I:
+
 - Set up Keycloak, from installation to configuration,
 - Embedded Keycloak into a simple React frontend so that users can log in and out via a button,
 - Implemented role-based access control (RBAC), ensuring that certain pages or components in the frontend are only accessible to users with the appropriate roles.
@@ -52,20 +53,21 @@ Once the Docker Compose file was ready, I ran `docker-compose up`, making Keyclo
 With Keycloak running, I configured it for my frontend:
 
 1. **Creating a Realm**: I created a realm called `my-website`, an isolated space for managing users, roles, and clients.
-   
+
 2. **Defining Roles**:
-   - `viewer`
-   - `editor`
+    - `viewer`
+    - `editor`
 
 3. **Creating Users**:
-   - `test_viewer` (assigned `viewer` role)
-   - `test_editor` (assigned `editor` role)
-   - I also needed to **create credentials (password)** for these users.
+    - `test_viewer` (assigned `viewer` role)
+    - `test_editor` (assigned `editor` role)
+    - I also needed to **create credentials (password)** for these users.
 
 4. **Setting Up the Frontend Client**:
-   - **Client ID**: `my-website-frontend`
-   - **Root URL & Web Origins**: `http://localhost:3000`
-   - **Valid Redirect URLs & Post-Logout Redirect URIs**: `http://localhost:3000/*`
+    - **Client ID**: `my-website-frontend`
+    - **Root URL & Web Origins**: `http://localhost:3000`
+    - **Valid Redirect URLs & Post-Logout Redirect URIs**: `http://localhost:3000/*`
+
 
 #### Key Points:
 - **Realm**: Isolates users and clients for a specific application.
