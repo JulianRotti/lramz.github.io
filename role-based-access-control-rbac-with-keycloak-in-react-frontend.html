@@ -130,10 +130,12 @@
               sm:text-left md:text-justify
               ">
     <h2 id="introduction">Introduction</h2>
-<p>In this blog post, I&rsquo;ll walk you through how I:
-- Set up Keycloak, from installation to configuration,
-- Embedded Keycloak into a simple React frontend so that users can log in and out via a button,
-- Implemented role-based access control (RBAC), ensuring that certain pages or components in the frontend are only accessible to users with the appropriate roles.</p>
+<p>In this blog post, I&rsquo;ll walk you through how I:</p>
+<ul>
+<li>Set up Keycloak, from installation to configuration,</li>
+<li>Embedded Keycloak into a simple React frontend so that users can log in and out via a button,</li>
+<li>Implemented role-based access control (RBAC), ensuring that certain pages or components in the frontend are only accessible to users with the appropriate roles.</li>
+</ul>
 <p>A minimal working example is available here: <a href="https://github.com/JulianRotti/keycloak-react">https://github.com/JulianRotti/keycloak-react</a>.</p>
 <hr/>
 <h2 id="setting-up-keycloak">Setting Up Keycloak</h2>
@@ -170,25 +172,27 @@
 </li>
 <li>
 <p><strong>Defining Roles</strong>:</p>
-</li>
+<ul>
 <li><code>viewer</code></li>
-<li>
-<p><code>editor</code></p>
+<li><code>editor</code></li>
+</ul>
 </li>
 <li>
 <p><strong>Creating Users</strong>:</p>
-</li>
+<ul>
 <li><code>test_viewer</code> (assigned <code>viewer</code> role)</li>
 <li><code>test_editor</code> (assigned <code>editor</code> role)</li>
-<li>
-<p>I also needed to <strong>create credentials (password)</strong> for these users.</p>
+<li>I also needed to <strong>create credentials (password)</strong> for these users.</li>
+</ul>
 </li>
 <li>
 <p><strong>Setting Up the Frontend Client</strong>:</p>
-</li>
+<ul>
 <li><strong>Client ID</strong>: <code>my-website-frontend</code></li>
 <li><strong>Root URL &amp; Web Origins</strong>: <code>http://localhost:3000</code></li>
 <li><strong>Valid Redirect URLs &amp; Post-Logout Redirect URIs</strong>: <code>http://localhost:3000/*</code></li>
+</ul>
+</li>
 </ol>
 <h4>Key Points:</h4>
 <ul>

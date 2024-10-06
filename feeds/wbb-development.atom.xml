@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom"><title>Road to Dev - wbb development</title><link href="https://julianrotti.github.io/" rel="alternate"></link><link href="https://julianrotti.github.io/feeds/wbb-development.atom.xml" rel="self"></link><id>https://julianrotti.github.io/</id><updated>2024-10-06T00:00:00+02:00</updated><entry><title>Role-Based Access Control (RBAC) with Keycloak in React Frontend</title><link href="https://julianrotti.github.io/role-based-access-control-rbac-with-keycloak-in-react-frontend.html" rel="alternate"></link><published>2024-10-06T00:00:00+02:00</published><updated>2024-10-06T00:00:00+02:00</updated><author><name>Leon Ramzews</name></author><id>tag:julianrotti.github.io,2024-10-06:/role-based-access-control-rbac-with-keycloak-in-react-frontend.html</id><summary type="html">&lt;p&gt;Securing a React frontend with Keycloak such that only users with certain roles are allowed to access pages or components in the application.&lt;/p&gt;</summary><content type="html">&lt;h2 id="introduction"&gt;Introduction&lt;/h2&gt;
-&lt;p&gt;In this blog post, I&amp;rsquo;ll walk you through how I:
-- Set up Keycloak, from installation to configuration,
-- Embedded Keycloak into a simple React frontend so that users can log in and out via a button,
-- Implemented role-based access control (RBAC), ensuring that certain pages or components in the frontend are only accessible to users with the appropriate roles.&lt;/p&gt;
+&lt;p&gt;In this blog post, I&amp;rsquo;ll walk you through how I:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;Set up Keycloak, from installation to configuration,&lt;/li&gt;
+&lt;li&gt;Embedded Keycloak into a simple React frontend so that users can log in and out via a button,&lt;/li&gt;
+&lt;li&gt;Implemented role-based access control (RBAC), ensuring that certain pages or components in the frontend are only accessible to users with the appropriate roles.&lt;/li&gt;
+&lt;/ul&gt;
 &lt;p&gt;A minimal working example is available here: &lt;a href="https://github.com/JulianRotti/keycloak-react"&gt;https://github.com/JulianRotti/keycloak-react&lt;/a&gt;.&lt;/p&gt;
 &lt;hr/&gt;
 &lt;h2 id="setting-up-keycloak"&gt;Setting Up Keycloak&lt;/h2&gt;
@@ -40,25 +42,27 @@
 &lt;/li&gt;
 &lt;li&gt;
 &lt;p&gt;&lt;strong&gt;Defining Roles&lt;/strong&gt;:&lt;/p&gt;
-&lt;/li&gt;
+&lt;ul&gt;
 &lt;li&gt;&lt;code&gt;viewer&lt;/code&gt;&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;&lt;code&gt;editor&lt;/code&gt;&lt;/p&gt;
+&lt;li&gt;&lt;code&gt;editor&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
 &lt;/li&gt;
 &lt;li&gt;
 &lt;p&gt;&lt;strong&gt;Creating Users&lt;/strong&gt;:&lt;/p&gt;
-&lt;/li&gt;
+&lt;ul&gt;
 &lt;li&gt;&lt;code&gt;test_viewer&lt;/code&gt; (assigned &lt;code&gt;viewer&lt;/code&gt; role)&lt;/li&gt;
 &lt;li&gt;&lt;code&gt;test_editor&lt;/code&gt; (assigned &lt;code&gt;editor&lt;/code&gt; role)&lt;/li&gt;
-&lt;li&gt;
-&lt;p&gt;I also needed to &lt;strong&gt;create credentials (password)&lt;/strong&gt; for these users.&lt;/p&gt;
+&lt;li&gt;I also needed to &lt;strong&gt;create credentials (password)&lt;/strong&gt; for these users.&lt;/li&gt;
+&lt;/ul&gt;
 &lt;/li&gt;
 &lt;li&gt;
 &lt;p&gt;&lt;strong&gt;Setting Up the Frontend Client&lt;/strong&gt;:&lt;/p&gt;
-&lt;/li&gt;
+&lt;ul&gt;
 &lt;li&gt;&lt;strong&gt;Client ID&lt;/strong&gt;: &lt;code&gt;my-website-frontend&lt;/code&gt;&lt;/li&gt;
 &lt;li&gt;&lt;strong&gt;Root URL &amp;amp; Web Origins&lt;/strong&gt;: &lt;code&gt;http://localhost:3000&lt;/code&gt;&lt;/li&gt;
 &lt;li&gt;&lt;strong&gt;Valid Redirect URLs &amp;amp; Post-Logout Redirect URIs&lt;/strong&gt;: &lt;code&gt;http://localhost:3000/*&lt;/code&gt;&lt;/li&gt;
+&lt;/ul&gt;
+&lt;/li&gt;
 &lt;/ol&gt;
 &lt;h4&gt;Key Points:&lt;/h4&gt;
 &lt;ul&gt;
