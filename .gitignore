@@ -10,9 +10,6 @@ __pycache__/
 venv/
 .env/
 
-# Pelican output
-output/
-
 # Pelican cache files
 *.log
 cache/
