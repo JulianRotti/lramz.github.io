@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="generator" content="Pelican" />
+    <meta name="description" content="Road to Dev Blog Posts">
+    <title>Role-Based Access Control (RBAC) with Keycloak in React Frontend</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto+Slab|Ruda" />
+    <link rel="stylesheet" type="text/css" href="http://127.0.0.1:8000/theme/css/main.css" />
+    <link rel="stylesheet" type="text/css" href="http://127.0.0.1:8000/theme/css/pygment.css" />
+    <link rel="shortcut icon" href="http://127.0.0.1:8000/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="http://127.0.0.1:8000/theme/css/stork.css">
+    <link rel="stylesheet" media="screen and (prefers-color-scheme: dark)"
+        href="http://127.0.0.1:8000/theme/css/stork-dark.css">
+    <link
+        href="http://127.0.0.1:8000/feeds/all.atom.xml"
+        type="application/atom+xml" rel="alternate" title="Road to Dev Atom Feed" />
+<meta name="description" content="Securing a React frontend with Keycloak such that only users with certain roles are allowed to access pages or components in the application." />
+</head>
+
+<body class="min-h-screen flex flex-col max-w-7xl lg:max-w-none text-zinc-800 bg-neutral-100 
+    dark:bg-neutral-900 dark:text-zinc-300 container mx-auto justify-center md:px-3 ">
+    <script>
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia(
+                '(prefers-color-scheme: dark)').matches)) {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark')
+        }
+    </script>
+    <nav class="sm:flex sm:justify-between xl:ml-32 pl-4 items-center">
+        <div class="flex pt-4">
+            <h1 class="font-semibold text-2xl"><a href="http://127.0.0.1:8000/">Road to Dev</a></h1>
+            <button id="theme-toggle" type="button" aria-label="Light|Dark"
+                class="text-zinc-700 dark:text-zinc-400 rounded-full focus:outline-none text-sm ml-2 p-1">
+                <svg id="theme-toggle-dark-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"></path>
+                </svg>
+                <svg id="theme-toggle-light-icon" class="w-5 h-5 hidden" fill="currentColor" viewBox="0 0 20 20"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path
+                        d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z"
+                        fill-rule="evenodd" clip-rule="evenodd"></path>
+                </svg>
+            </button>
+        </div>
+        <ul class="flex flex-wrap lg:mr-24 md:pt-0">
+            <li class="mr-4 pt-6"><a  href="http://127.0.0.1:8000/archives.html">Archive</a></li>
+            <li class="mr-4 pt-6"><a                     href="http://127.0.0.1:8000/categories.html">Categories</a></li>
+            <li class="mr-4 pt-6"><a  href="http://127.0.0.1:8000/tags.html">Tags</a></li>
+            <!--<li class="mr-4 pt-6"><a  href="http://127.0.0.1:8000/search.html">Search</a></li>-->
+        </ul>
+    </nav>
+    <div class="flex-grow md:max-w-screen-md md:mx-auto md:w-3/4 px-4">
+        <nav class="text-zinc-800 dark:text-zinc-300 mt-12 pb-2 md:mt-16" aria-label="Breadcrumb">
+            <ul class="p-0 inline-flex items-center">
+                <li class="flex items-center">
+                    <a href="http://127.0.0.1:8000/" class="text-zinc-800 dark:text-zinc-300 inline-flex items-center">
+                        <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path
+                                d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z">
+                            </path>
+                        </svg>
+                        Home
+                    </a>
+                    <svg class="fill-current w-3 h-3 mr-2 ml-1" xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 320 512">
+                        <path
+                            d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z" />
+                    </svg>
+                </li>
+                <li class="flex items-center">
+                    <a href="http://127.0.0.1:8000/categories.html">Categories</a>
+                    <svg class="fill-current w-3 h-3 mr-2 ml-1" xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 320 512">
+                        <path
+                            d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z" />
+                    </svg>
+                </li>
+                <li class="flex items-center">
+                    <a href="http://127.0.0.1:8000/category/wbb-development.html">wbb development</a>
+                    <svg class="fill-current w-3 h-3 mr-2 ml-1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512">
+                        <path
+                            d="M285.476 272.971L91.132 467.314c-9.373 9.373-24.569 9.373-33.941 0l-22.667-22.667c-9.357-9.357-9.375-24.522-.04-33.901L188.505 256 34.484 101.255c-9.335-9.379-9.317-24.544.04-33.901l22.667-22.667c9.373-9.373 24.569-9.373 33.941 0L285.475 239.03c9.373 9.372 9.373 24.568.001 33.941z" />
+                    </svg>
+                </li>
+            </ul>
+        </nav>
+
+<main>
+  <header>
+    <h1 class="font-semibold text-3xl my-2">Role-Based Access Control (RBAC) with Keycloak in React Frontend</h1>
+    <footer class="flex text-sm text-zinc-800 dark:text-zinc-400">
+      <div class="flex text-xs text-zinc-800 dark:text-zinc-400">
+        <time>October 06, 2024</time>
+        <div>
+        </div>
+        <div>
+          <span>&nbsp;·&nbsp;Leon Ramzews</span>
+        </div>
+      </div>
+    </footer>
+  </header>
+  <details class="flex flex-col my-6 p-4 bg-zinc-200 dark:bg-zinc-800 rounded-lg">
+    <summary class="text-lg font-bold">Table of contents</summary>
+    <div class="mx-4 px-4 underline">
+      <div id="toc"><ul><li><a class="toc-href" href="#introduction" title="Introduction">Introduction</a></li><li><a class="toc-href" href="#setting-up-keycloak" title="Setting Up Keycloak">Setting Up Keycloak</a><ul><li><a class="toc-href" href="#installing-keycloak-with-docker" title="Installing Keycloak with Docker">Installing Keycloak with Docker</a></li><li><a class="toc-href" href="#configuring-keycloak" title="Configuring Keycloak">Configuring Keycloak</a></li></ul></li><li><a class="toc-href" href="#react-frontend_1" title="React Frontend">React Frontend</a><ul><li><a class="toc-href" href="#react-frontend-structure-with-keycloak-rbac" title="React Frontend Structure with Keycloak RBAC">React Frontend Structure with Keycloak RBAC</a></li><li><a class="toc-href" href="#appjs-and-indexjs" title="App.js and index.js">App.js and index.js</a></li><li><a class="toc-href" href="#components" title="Components">Components</a></li><li><a class="toc-href" href="#contexts" title="Contexts">Contexts</a></li><li><a class="toc-href" href="#pages" title="Pages">Pages</a></li><li><a class="toc-href" href="#routes" title="Routes">Routes</a></li><li><a class="toc-href" href="#services" title="Services">Services</a></li></ul></li></ul></div>
+    </div>
+  </details>
+  <div class="max-w-7xl container mx-auto my-8 text-zinc-800 dark:text-zinc-300  
+              prose lg:max-w-none prose-headings:text-zinc-800 prose-headings:dark:text-zinc-300 
+              prose-h1:text-3xl lg:prose-h1:text-3xl prose-headings:font-semibold 
+              prose-pre:bg-zinc-200 prose-pre:text-zinc-800
+              dark:prose-pre:bg-zinc-800 dark:prose-pre:text-zinc-200
+              prose-blockquote:text-zinc-800
+              dark:prose-blockquote:text-zinc-200
+              prose-a:text-slate-600 prose-a:font-normal
+              dark:prose-a:text-slate-400
+              dark:prose-strong:text-zinc-200 
+              dark:prose-code:text-zinc-200
+              dark:prose-code:bg-zinc-800
+              prose-code:bg-zinc-200
+              prose-code:font-light
+              prose-img:rounded-md
+              sm:text-left md:text-justify
+              ">
+    <h2 id="introduction">Introduction</h2>
+<p>In this blog post, I&rsquo;ll walk you through how I:
+- Set up Keycloak, from installation to configuration,
+- Embedded Keycloak into a simple React frontend so that users can log in and out via a button,
+- Implemented role-based access control (RBAC), ensuring that certain pages or components in the frontend are only accessible to users with the appropriate roles.</p>
+<p>A minimal working example is available here: <a href="https://github.com/JulianRotti/keycloak-react">https://github.com/JulianRotti/keycloak-react</a>.</p>
+<hr/>
+<h2 id="setting-up-keycloak">Setting Up Keycloak</h2>
+<h3 id="installing-keycloak-with-docker">Installing Keycloak with Docker</h3>
+<p>The first step was setting up Keycloak using Docker. I created a <code>docker-compose.yml</code> file to manage the Keycloak instance:</p>
+<div class="highlight"><pre><span></span><code><span class="nt">services</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">keycloak</span><span class="p">:</span>
+<span class="w">    </span><span class="nt">image</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">quay.io/keycloak/keycloak:25.0.6</span>
+<span class="w">    </span><span class="nt">container_name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">keycloak</span>
+<span class="w">    </span><span class="nt">environment</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">KEYCLOAK_ADMIN=admin</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">KEYCLOAK_ADMIN_PASSWORD=admin</span>
+<span class="w">    </span><span class="nt">ports</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"8080:8080"</span>
+<span class="w">    </span><span class="nt">command</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">start-dev</span>
+<span class="w">    </span><span class="nt">volumes</span><span class="p">:</span>
+<span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">keycloak_data:/opt/keycloak/data</span>
+
+<span class="nt">volumes</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">keycloak_data</span><span class="p">:</span>
+</code></pre></div>
+<h4>Key Points:</h4>
+<ul>
+<li><strong>Image</strong>: The Keycloak image version <code>25.0.6</code> from the quay.io repository was used.</li>
+<li><strong>Admin Credentials</strong>: Admin user was created with <code>admin/admin</code>.</li>
+<li><strong>Volumes</strong>: Persistent Keycloak data is stored via Docker volumes.</li>
+</ul>
+<p>Once the Docker Compose file was ready, I ran <code>docker-compose up</code>, making Keycloak accessible via <a href="http://localhost:8080">http://localhost:8080</a>.</p>
+<h3 id="configuring-keycloak">Configuring Keycloak</h3>
+<p>With Keycloak running, I configured it for my frontend:</p>
+<ol>
+<li>
+<p><strong>Creating a Realm</strong>: I created a realm called <code>my-website</code>, an isolated space for managing users, roles, and clients.</p>
+</li>
+<li>
+<p><strong>Defining Roles</strong>:</p>
+</li>
+<li><code>viewer</code></li>
+<li>
+<p><code>editor</code></p>
+</li>
+<li>
+<p><strong>Creating Users</strong>:</p>
+</li>
+<li><code>test_viewer</code> (assigned <code>viewer</code> role)</li>
+<li><code>test_editor</code> (assigned <code>editor</code> role)</li>
+<li>
+<p>I also needed to <strong>create credentials (password)</strong> for these users.</p>
+</li>
+<li>
+<p><strong>Setting Up the Frontend Client</strong>:</p>
+</li>
+<li><strong>Client ID</strong>: <code>my-website-frontend</code></li>
+<li><strong>Root URL &amp; Web Origins</strong>: <code>http://localhost:3000</code></li>
+<li><strong>Valid Redirect URLs &amp; Post-Logout Redirect URIs</strong>: <code>http://localhost:3000/*</code></li>
+</ol>
+<h4>Key Points:</h4>
+<ul>
+<li><strong>Realm</strong>: Isolates users and clients for a specific application.</li>
+<li><strong>RBAC Roles</strong>: Keycloak's role system supports RBAC.</li>
+<li><strong>Client Settings</strong>: Proper configuration ensures secure communication between React and Keycloak.</li>
+</ul>
+<hr/>
+<h2 id="react-frontend_1">React Frontend</h2>
+<h3 id="react-frontend-structure-with-keycloak-rbac">React Frontend Structure with Keycloak RBAC</h3>
+<p>When building a React application that integrates Keycloak for Role-Based Access Control (RBAC), organizing the folder structure is critical for maintainability and clarity. Here&rsquo;s the folder structure I used and the purpose of each folder:</p>
+<div class="highlight"><pre><span></span><code>src/
+&boxvr;&boxh;&boxh; components/
+&boxv;   &boxvr;&boxh;&boxh; Sidebar/
+&boxv;   &boxv;   &boxvr;&boxh;&boxh; Sidebar.js
+&boxv;   &boxv;   &boxvr;&boxh;&boxh; KeycloakButton.js
+&boxv;   &boxv;   &boxur;&boxh;&boxh; UserInfo.js
+&boxv;   &boxur;&boxh;&boxh; AccessControl.js
+&boxvr;&boxh;&boxh; contexts/
+&boxv;   &boxur;&boxh;&boxh; AuthContext.js
+&boxvr;&boxh;&boxh; pages/
+&boxv;   &boxvr;&boxh;&boxh; HomePage.js
+&boxv;   &boxvr;&boxh;&boxh; EditorRole.js
+&boxv;   &boxvr;&boxh;&boxh; AllRoles.js
+&boxv;   &boxur;&boxh;&boxh; NoAccess.js
+&boxvr;&boxh;&boxh; routes/
+&boxv;   &boxvr;&boxh;&boxh; AppRoutes.js
+&boxv;   &boxur;&boxh;&boxh; RouteConfig.js
+&boxvr;&boxh;&boxh; services/
+&boxv;   &boxur;&boxh;&boxh; keycloak.js
+&boxvr;&boxh;&boxh; App.js
+&boxvr;&boxh;&boxh; index.js
+</code></pre></div>
+<h3 id="appjs-and-indexjs"><code>App.js</code> and <code>index.js</code></h3>
+<p>The <strong>key idea</strong> behind the structure is to <strong>centralize the authentication state</strong> in <code>contexts/AuthContext.js</code>. By wrapping the entire app in the <code>AuthProvider</code> inside <code>App.js</code>, all components can access the authentication state consistently.</p>
+<h4><strong><code>App.js</code></strong></h4>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nx">React</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">BrowserRouter</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">Router</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react-router-dom'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">Sidebar</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'./components/Sidebar/Sidebar.js'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">AppRoutes</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'./routes/AppRoutes.js'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">AuthProvider</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'./contexts/AuthContext.js'</span><span class="p">;</span><span class="w"> </span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">App</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">AuthProvider</span><span class="o">&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">Router</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">Sidebar</span><span class="o">&gt;</span>
+<span class="w">          </span><span class="o">&lt;</span><span class="nx">AppRoutes</span><span class="w"> </span><span class="o">/&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/Sidebar&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/Router&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/AuthProvider&gt;</span>
+<span class="w">  </span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="nx">App</span><span class="p">;</span>
+</code></pre></div>
+<h4><strong><code>index.js</code></strong></h4>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nx">React</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">createRoot</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react-dom/client'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="s1">'./index.css'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">App</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'./App.js'</span><span class="p">;</span><span class="w">  </span><span class="c1">// Main App component</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">rootElement</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nb">document</span><span class="p">.</span><span class="nx">getElementById</span><span class="p">(</span><span class="s1">'root'</span><span class="p">);</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">root</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">createRoot</span><span class="p">(</span><span class="nx">rootElement</span><span class="p">);</span>
+
+<span class="nx">root</span><span class="p">.</span><span class="nx">render</span><span class="p">(</span><span class="o">&lt;</span><span class="nx">App</span><span class="w"> </span><span class="o">/&gt;</span><span class="p">);</span>
+</code></pre></div>
+<hr/>
+<h3 id="components">Components</h3>
+<p>The <code>components/</code> folder contains reusable components and higher-order components (HOCs) for layout and controlling access to pages.</p>
+<h4><strong><code>Sidebar/Sidebar.js</code></strong></h4>
+<p>Handles navigation, renders links based on the available routes, and enforces role-based access via the <code>AccessControl</code> component. It includes a login/logout button and user information.</p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nx">React</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">Link</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react-router-dom'</span><span class="p">;</span><span class="w"> </span>
+<span class="k">import</span><span class="w"> </span><span class="nx">routes</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'../../routes/RouteConfig.js'</span><span class="p">;</span><span class="w"> </span>
+<span class="k">import</span><span class="w"> </span><span class="nx">KeycloakButton</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'./KeycloakButton.js'</span><span class="p">;</span><span class="w"> </span>
+<span class="k">import</span><span class="w"> </span><span class="nx">UserInfo</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'./UserInfo.js'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">AccessControl</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'../AccessControl.js'</span><span class="p">;</span>
+
+<span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">Sidebar</span><span class="p">({</span><span class="w"> </span><span class="nx">children</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">div</span><span class="w"> </span><span class="nx">style</span><span class="o">=</span><span class="p">{{</span><span class="w"> </span><span class="nx">display</span><span class="o">:</span><span class="w"> </span><span class="s1">'flex'</span><span class="w"> </span><span class="p">}}</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">div</span><span class="w"> </span><span class="nx">style</span><span class="o">=</span><span class="p">{{</span><span class="w"> </span><span class="nx">width</span><span class="o">:</span><span class="w"> </span><span class="s1">'20%'</span><span class="p">,</span><span class="w"> </span><span class="kr">float</span><span class="o">:</span><span class="w"> </span><span class="s1">'left'</span><span class="w"> </span><span class="p">}}</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
+<span class="w">                </span><span class="p">{</span><span class="nx">routes</span>
+<span class="w">                </span><span class="p">.</span><span class="nx">filter</span><span class="p">(</span><span class="nx">route</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="o">!</span><span class="nx">route</span><span class="p">.</span><span class="nx">hidden</span><span class="p">)</span>
+<span class="w">                </span><span class="p">.</span><span class="nx">map</span><span class="p">((</span><span class="nx">route</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">(</span>
+<span class="w">                    </span><span class="o">&lt;</span><span class="nx">AccessControl</span><span class="w"> </span><span class="nx">key</span><span class="o">=</span><span class="p">{</span><span class="nx">route</span><span class="p">.</span><span class="nx">path</span><span class="p">}</span><span class="w"> </span><span class="nx">requiredRoles</span><span class="o">=</span><span class="p">{</span><span class="nx">route</span><span class="p">.</span><span class="nx">roles</span><span class="p">}</span><span class="o">&gt;</span>
+<span class="w">                        </span><span class="o">&lt;</span><span class="nx">p</span><span class="w"> </span><span class="nx">key</span><span class="o">=</span><span class="p">{</span><span class="nx">route</span><span class="p">.</span><span class="nx">path</span><span class="p">}</span><span class="o">&gt;</span>
+<span class="w">                            </span><span class="o">&lt;</span><span class="nx">Link</span><span class="w"> </span><span class="nx">to</span><span class="o">=</span><span class="p">{</span><span class="nx">route</span><span class="p">.</span><span class="nx">path</span><span class="p">}</span><span class="o">&gt;</span><span class="p">{</span><span class="nx">route</span><span class="p">.</span><span class="nx">name</span><span class="p">}</span><span class="o">&lt;</span><span class="err">/Link&gt;</span>
+<span class="w">                        </span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+<span class="w">                    </span><span class="o">&lt;</span><span class="err">/AccessControl&gt;</span>
+<span class="w">                </span><span class="p">))}</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">KeycloakButton</span><span class="w"> </span><span class="o">/&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">UserInfo</span><span class="w"> </span><span class="o">/&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">div</span><span class="w"> </span><span class="nx">style</span><span class="o">=</span><span class="p">{{</span><span class="w"> </span><span class="nx">width</span><span class="o">:</span><span class="w"> </span><span class="s1">'80%'</span><span class="p">,</span><span class="w"> </span><span class="kr">float</span><span class="o">:</span><span class="w"> </span><span class="s1">'left'</span><span class="w"> </span><span class="p">}}</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="p">{</span><span class="nx">children</span><span class="p">}</span><span class="w"> </span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+<span class="w">  </span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<h4><strong><code>KeycloakButton.js</code></strong></h4>
+<p>Provides a login/logout button based on the user&rsquo;s authentication status.</p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nx">React</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useContext</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">"react"</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">loginKeycloak</span><span class="p">,</span><span class="w"> </span><span class="nx">logoutKeycloak</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">"../../services/keycloak.js"</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">AuthContext</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">"../../contexts/AuthContext.js"</span><span class="p">;</span>
+
+<span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">KeycloakButton</span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">isAuthenticated</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useContext</span><span class="p">(</span><span class="nx">AuthContext</span><span class="p">);</span>
+
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">handleButtonClick</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span><span class="w">  </span>
+<span class="w">        </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">isAuthenticated</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">logoutKeycloak</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">loginKeycloak</span><span class="p">();</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">(</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">button</span><span class="w"> </span><span class="nx">onClick</span><span class="o">=</span><span class="p">{</span><span class="nx">handleButtonClick</span><span class="p">}</span><span class="o">&gt;</span>
+<span class="w">                </span><span class="p">{</span><span class="w"> </span><span class="nx">isAuthenticated</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s2">"Logout"</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s2">"Login"</span><span class="w"> </span><span class="p">}</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="err">/button&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<h4><strong><code>UserInfo.js</code></strong></h4>
+<p>Displays the current username and roles if the user is authenticated.</p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nx">React</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useContext</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">"react"</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">getUsernameAndRoles</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">"../../services/keycloak.js"</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">AuthContext</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">"../../contexts/AuthContext.js"</span><span class="p">;</span>
+
+<span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">UserInfo</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">isAuthenticated</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useContext</span><span class="p">(</span><span class="nx">AuthContext</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">isAuthenticated</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="kc">null</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="nx">username</span><span class="p">,</span><span class="w"> </span><span class="nx">roles</span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">getUsernameAndRoles</span><span class="p">([</span><span class="s1">'editor'</span><span class="p">,</span><span class="w"> </span><span class="s1">'viewer'</span><span class="p">]);</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">(</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span><span class="p">{</span><span class="w"> </span><span class="sb">`username: </span><span class="si">${</span><span class="nx">username</span><span class="si">}</span><span class="sb">`</span><span class="w"> </span><span class="p">}</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">p</span><span class="o">&gt;</span><span class="p">{</span><span class="w"> </span><span class="sb">`roles: </span><span class="si">${</span><span class="nx">roles</span><span class="p">.</span><span class="nx">join</span><span class="p">(</span><span class="s2">", "</span><span class="p">)</span><span class="si">}</span><span class="sb">`</span><span class="w"> </span><span class="p">}</span><span class="o">&lt;</span><span class="err">/p&gt;</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/div&gt;</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<h4><strong><code>AccessControl.js</code></strong></h4>
+<p>This HOC checks if the authenticated user has the necessary role(s) to access a page. If not, it redirects to the "No Access" page or hides certain components. </p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nx">React</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">useContext</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">AuthContext</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'../contexts/AuthContext.js'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">hasRole</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'../services/keycloak.js'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">Navigate</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react-router-dom'</span><span class="p">;</span>
+
+<span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">AccessControl</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">requiredRoles</span><span class="p">,</span><span class="w"> </span><span class="nx">children</span><span class="p">,</span><span class="w"> </span><span class="nx">fallback</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">null</span><span class="p">,</span><span class="w"> </span><span class="nx">redirect</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">})</span><span class="w"> </span><span class="p">{</span>
+
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">isAuthenticated</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useContext</span><span class="p">(</span><span class="nx">AuthContext</span><span class="p">);</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">requiredRoles</span><span class="p">.</span><span class="nx">includes</span><span class="p">(</span><span class="s1">'public'</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">children</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">hasRequiredRole</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">requiredRoles</span><span class="p">.</span><span class="nx">some</span><span class="p">(</span><span class="nx">role</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">hasRole</span><span class="p">(</span><span class="nx">role</span><span class="p">));</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">isAuthenticated</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="o">!</span><span class="nx">hasRequiredRole</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">redirect</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="o">&lt;</span><span class="nx">Navigate</span><span class="w"> </span><span class="nx">to</span><span class="o">=</span><span class="s2">"/no-access"</span><span class="w"> </span><span class="nx">replace</span><span class="o">/&gt;</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="nx">fallback</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
+
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">children</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p>Here we use this component to restrict the access to entire pages, but you can also use this component to <strong>conditionally hide buttons or sections</strong>. Here's an example of how to hide a button:</p>
+<div class="highlight"><pre><span></span><code><span class="o">&lt;</span><span class="nx">AccessControl</span><span class="w"> </span><span class="nx">requiredRoles</span><span class="o">=</span><span class="p">{[</span><span class="s1">'editor'</span><span class="p">]}</span><span class="o">&gt;</span>
+<span class="w">  </span><span class="o">&lt;</span><span class="nx">button</span><span class="o">&gt;</span><span class="nx">Edit</span><span class="w"> </span><span class="nx">Content</span><span class="o">&lt;</span><span class="err">/button&gt;</span>
+<span class="o">&lt;</span><span class="err">/AccessControl&gt;</span>
+</code></pre></div>
+<hr/>
+<h3 id="contexts">Contexts</h3>
+<p>The <code>contexts/</code> folder contains the <code>AuthContext.js</code>, which manages the <strong>global authentication state</strong>. This context is crucial because it ensures that <strong>authentication listeners are set up once</strong>, avoiding multiple instances or duplicate event handling.</p>
+<h4><strong><code>AuthContext.js</code></strong></h4>
+<p>The <code>AuthContext.js</code> provides authentication state and methods, initializing Keycloak and handling session changes. For that authentification listeners from the keycloak service are set up so that every time the user logs in or out the <code>isAuthenticated</code> state is updated.</p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nx">React</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">createContext</span><span class="p">,</span><span class="w"> </span><span class="nx">useState</span><span class="p">,</span><span class="w"> </span><span class="nx">useEffect</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">initKeycloak</span><span class="p">,</span><span class="w"> </span><span class="nx">authentificationListener</span><span class="p">,</span><span class="w"> </span><span class="nx">checkKeycloakLogin</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">"../services/keycloak.js"</span><span class="p">;</span>
+
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">AuthContext</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">createContext</span><span class="p">();</span>
+
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">AuthProvider</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">({</span><span class="w"> </span><span class="nx">children</span><span class="w"> </span><span class="p">})</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="p">[</span><span class="nx">isAuthenticated</span><span class="p">,</span><span class="w"> </span><span class="nx">setIsAuthenticated</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useState</span><span class="p">(</span><span class="kc">false</span><span class="p">);</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="p">[</span><span class="nx">authLoading</span><span class="p">,</span><span class="w"> </span><span class="nx">setAuthLoading</span><span class="p">]</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">useState</span><span class="p">(</span><span class="kc">true</span><span class="p">);</span>
+
+<span class="w">    </span><span class="nx">useEffect</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="kd">const</span><span class="w"> </span><span class="nx">initializeKeycloak</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">await</span><span class="w"> </span><span class="nx">initKeycloak</span><span class="p">();</span>
+<span class="w">        </span><span class="c1">// set the authentication state for the first time</span>
+<span class="w">        </span><span class="nx">setIsAuthenticated</span><span class="p">(</span><span class="nx">checkKeycloakLogin</span><span class="p">());</span>
+<span class="w">        </span><span class="c1">// set up event listeners for updating the authentification state in the future</span>
+<span class="w">        </span><span class="nx">authentificationListener</span><span class="p">(</span><span class="nx">setIsAuthenticated</span><span class="p">);</span>
+<span class="w">        </span><span class="nx">setAuthLoading</span><span class="p">(</span><span class="kc">false</span><span class="p">);</span><span class="w"> </span>
+<span class="w">      </span><span class="p">};</span>
+
+<span class="w">      </span><span class="nx">initializeKeycloak</span><span class="p">();</span>
+<span class="w">    </span><span class="p">},</span><span class="w"> </span><span class="p">[]);</span>
+
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">authLoading</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span><span class="nx">Loading</span><span class="p">...</span><span class="o">&lt;</span><span class="err">/div&gt;; </span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="c1">// return a provider in which the authentication state can be accessed</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">(</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="nx">AuthContext</span><span class="p">.</span><span class="nx">Provider</span><span class="w"> </span><span class="nx">value</span><span class="o">=</span><span class="p">{{</span><span class="w"> </span><span class="nx">isAuthenticated</span><span class="w"> </span><span class="p">}}</span><span class="o">&gt;</span>
+<span class="w">            </span><span class="p">{</span><span class="nx">children</span><span class="p">}</span>
+<span class="w">        </span><span class="o">&lt;</span><span class="err">/AuthContext.Provider&gt;</span>
+<span class="w">    </span><span class="p">);</span>
+<span class="p">};</span>
+</code></pre></div>
+<hr/>
+<h3 id="pages">Pages</h3>
+<p>The <code>pages/</code> folder contains the main views that users navigate to. These pages are protected by the <code>AccessControl</code> component based on user roles.</p>
+<ul>
+<li><strong><code>HomePage.js</code></strong>: Accessible by all users, including unauthenticated ones.</li>
+<li><strong><code>EditorRole.js</code></strong>: Restricted to users with the <code>editor</code> role.</li>
+<li><strong><code>AllRoles.js</code></strong>: Accessible to both <code>editor</code> and <code>viewer</code> roles.</li>
+<li><strong><code>NoAccess.js</code></strong>: Shown when a user tries to access a page without proper roles.</li>
+</ul>
+<hr/>
+<h3 id="routes">Routes</h3>
+<p>The <code>routes/</code> folder manages the application&rsquo;s routing and defines which roles have access to specific pages.</p>
+<h4><strong><code>RouteConfig.js</code></strong></h4>
+<p>Defines the routes, components to render, and roles required to access them.</p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">lazy</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react'</span><span class="p">;</span>
+
+<span class="c1">// Centralized route configuration</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">routes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">'Home'</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s1">'/'</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="nx">lazy</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="s1">'../pages/HomePage.js'</span><span class="p">)),</span>
+<span class="w">    </span><span class="nx">roles</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s1">'public'</span><span class="p">],</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">'Editor Role'</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s1">'/editor-role'</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="nx">lazy</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="s1">'../pages/EditorRole.js'</span><span class="p">)),</span>
+<span class="w">    </span><span class="nx">roles</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s1">'editor'</span><span class="p">],</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">'All Roles'</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s1">'/all-roles'</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="nx">lazy</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="s1">'../pages/AllRoles.js'</span><span class="p">)),</span>
+<span class="w">    </span><span class="nx">roles</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s1">'editor'</span><span class="p">,</span><span class="w"> </span><span class="s1">'viewer'</span><span class="p">],</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="s1">'No Access'</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">path</span><span class="o">:</span><span class="w"> </span><span class="s1">'/no-access'</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">component</span><span class="o">:</span><span class="w"> </span><span class="nx">lazy</span><span class="p">(()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="k">import</span><span class="p">(</span><span class="s1">'../pages/NoAccess.js'</span><span class="p">)),</span>
+<span class="w">    </span><span class="nx">roles</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="s1">'public'</span><span class="p">],</span>
+<span class="w">    </span><span class="nx">hidden</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="p">];</span>
+
+<span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="nx">routes</span><span class="p">;</span>
+</code></pre></div>
+<h4><strong><code>AppRoutes.js</code></strong></h4>
+<p>Applies role-based access control to routes using the <code>AccessControl</code> component. If a user does not have the required role to access a page <code>redirect={true}</code> makes sure that the user is redirected to the no access page.</p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nx">React</span><span class="p">,</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">Suspense</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">Routes</span><span class="p">,</span><span class="w"> </span><span class="nx">Route</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'react-router-dom'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">routes</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'./RouteConfig.js'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">AccessControl</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'../components/AccessControl.js'</span><span class="p">;</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">AppRoutes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">(</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="nx">Suspense</span><span class="w"> </span><span class="nx">fallback</span><span class="o">=</span><span class="p">{</span><span class="o">&lt;</span><span class="nx">div</span><span class="o">&gt;</span><span class="nx">Loading</span><span class="p">...</span><span class="o">&lt;</span><span class="err">/div&gt;}&gt;</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="nx">Routes</span><span class="o">&gt;</span>
+<span class="w">        </span><span class="p">{</span><span class="nx">routes</span><span class="p">.</span><span class="nx">map</span><span class="p">((</span><span class="nx">route</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">(</span>
+<span class="w">            </span><span class="o">&lt;</span><span class="nx">Route</span>
+<span class="w">            </span><span class="nx">key</span><span class="o">=</span><span class="p">{</span><span class="nx">route</span><span class="p">.</span><span class="nx">path</span><span class="p">}</span><span class="w"> </span>
+<span class="w">            </span><span class="nx">path</span><span class="o">=</span><span class="p">{</span><span class="nx">route</span><span class="p">.</span><span class="nx">path</span><span class="p">}</span><span class="w"> </span>
+<span class="w">            </span><span class="nx">element</span><span class="o">=</span><span class="p">{</span>
+<span class="w">                </span><span class="o">&lt;</span><span class="nx">AccessControl</span><span class="w"> </span><span class="nx">requiredRoles</span><span class="o">=</span><span class="p">{</span><span class="nx">route</span><span class="p">.</span><span class="nx">roles</span><span class="p">}</span><span class="w"> </span><span class="nx">redirect</span><span class="o">=</span><span class="p">{</span><span class="kc">true</span><span class="p">}</span><span class="o">&gt;</span>
+<span class="w">                    </span><span class="o">&lt;</span><span class="nx">route</span><span class="p">.</span><span class="nx">component</span><span class="w"> </span><span class="o">/&gt;</span>
+<span class="w">                </span><span class="o">&lt;</span><span class="err">/AccessControl&gt;</span>
+<span class="w">            </span><span class="p">}</span><span class="w"> </span><span class="o">/&gt;</span>
+<span class="w">        </span><span class="p">))}</span>
+<span class="w">      </span><span class="o">&lt;</span><span class="err">/Routes&gt;</span>
+<span class="w">    </span><span class="o">&lt;</span><span class="err">/Suspense&gt;</span>
+<span class="w">  </span><span class="p">);</span>
+<span class="p">};</span>
+
+<span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="nx">AppRoutes</span><span class="p">;</span>
+</code></pre></div>
+<hr/>
+<h3 id="services">Services</h3>
+<p>The <code>services/</code> folder contains helper functions for interacting with Keycloak. The file <code>keycloak.js</code> includes initialization, login, logout, and role-checking logic.</p>
+<h4><strong><code>keycloak.js</code></strong></h4>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nx">Keycloak</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'keycloak-js'</span><span class="p">;</span>
+
+<span class="c1">// Config from .env file</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">keycloakConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">url</span><span class="o">:</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">REACT_APP_KEYCLOAK_URL</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">realm</span><span class="o">:</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">REACT_APP_KEYCLOAK_REALM</span><span class="p">,</span>
+<span class="w">    </span><span class="nx">clientId</span><span class="o">:</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">REACT_APP_KEYCLOAK_CLIENT_ID</span>
+<span class="p">};</span>
+
+<span class="c1">// Create a new Keycloak instance</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">keycloak</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">Keycloak</span><span class="p">(</span><span class="nx">keycloakConfig</span><span class="p">);</span>
+
+<span class="c1">// Initialize Keycloak with onLoad check-sso (so that the user is not automatically prompted to the keycloak login page)</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">initKeycloak</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">keycloak</span><span class="p">.</span><span class="nx">init</span><span class="p">({</span><span class="w"> </span><span class="nx">onLoad</span><span class="o">:</span><span class="w"> </span><span class="s1">'check-sso'</span><span class="w"> </span><span class="p">});</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">console</span><span class="p">.</span><span class="nx">error</span><span class="p">(</span><span class="s1">'Failed to initialize adapter:'</span><span class="p">,</span><span class="w"> </span><span class="nx">error</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+
+<span class="c1">// Other functions include loginKeycloak, logoutKeycloak, hasRole, and getUsernameAndRoles</span>
+</code></pre></div>
+    <!-- <div class="aspect-w-16 aspect-h-9 mx-auto"></div> CSS placeholder -->
+  </div>
+  <footer class="flex flex-col mt-10 ">
+    <ul class="flex flex-wrap">
+        <li
+          class="bg-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-800 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 mb-2 mr-2 px-3 py-1.5 rounded-md transition ease-in active:-translate-y-1 active:scale-110 duration-75">
+          <a href="http://127.0.0.1:8000/tag/keycloak.html">keycloak</a>
+        </li>
+        <li
+          class="bg-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-800 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 mb-2 mr-2 px-3 py-1.5 rounded-md transition ease-in active:-translate-y-1 active:scale-110 duration-75">
+          <a href="http://127.0.0.1:8000/tag/keycloak-js.html">keycloak-js</a>
+        </li>
+        <li
+          class="bg-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-800 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 mb-2 mr-2 px-3 py-1.5 rounded-md transition ease-in active:-translate-y-1 active:scale-110 duration-75">
+          <a href="http://127.0.0.1:8000/tag/rbac.html">rbac</a>
+        </li>
+        <li
+          class="bg-zinc-200 hover:bg-zinc-300 dark:hover:bg-zinc-800 dark:bg-zinc-700 text-zinc-600 dark:text-zinc-300 mb-2 mr-2 px-3 py-1.5 rounded-md transition ease-in active:-translate-y-1 active:scale-110 duration-75">
+          <a href="http://127.0.0.1:8000/tag/react.html">react</a>
+        </li>
+    </ul>
+    <div class="flex w-full my-2 bg-zinc-200 dark:bg-zinc-700 rounded-lg">
+      <div class="w-1/2 rounded-l-lg"></div>
+    </div>
+    <div class="flex bg-zinc-200 dark:bg-zinc-700 py-2 rounded-lg justify-center space-x-2 text-xs">
+      <ul>
+        <li class="bg-gray-900 p-1 text-white rounded-md">
+          <a target="_blank" rel="noopener noreferrer" title="twitter" aria-label="share Features on twitter"
+            href="https://twitter.com/intent/tweet/?text=Features&amp;url=http://127.0.0.1:8000/role-based-access-control-rbac-with-keycloak-in-react-frontend.html">
+            <i class="fab fa-twitter fa-2x" aria-hidden="true"></i>
+          </a>
+        </li>
+      </ul>
+      <ul>
+        <li class="bg-gray-900 p-1 text-white rounded-md">
+          <a target="_blank" rel="noopener noreferrer" title="linkedin" aria-label="share Features on linkedin"
+            href="https://www.linkedin.com/sharing/share-offsite/?url=http://127.0.0.1:8000/role-based-access-control-rbac-with-keycloak-in-react-frontend.html">
+            <i class="fab fa-linkedin fa-2x" aria-hidden="true"></i>
+          </a>
+        </li>
+      </ul>
+      <ul>
+        <li class="bg-gray-900 p-1 text-white rounded-md">
+          <a target="_blank" rel="noopener noreferrer" title="reddit" aria-label="share Features on reddit"
+            href="https://reddit.com/submit?url=http://127.0.0.1:8000/role-based-access-control-rbac-with-keycloak-in-react-frontend.html">
+            <i class="fab fa-reddit fa-2x" aria-hidden="true"></i>
+          </a>
+        </li>
+      </ul>
+      <ul>
+        <li class="bg-gray-900 p-1 text-white rounded-md">
+          <a target="_blank" rel="noopener noreferrer" title="facebook" aria-label="share Features on facebook"
+            href="https://facebook.com/sharer/sharer.php?u=http://127.0.0.1:8000/role-based-access-control-rbac-with-keycloak-in-react-frontend.html">
+            <i class="fab fa-facebook fa-2x" aria-hidden="true"></i>
+          </a>
+        </li>
+      </ul>
+      <ul>
+        <li class="bg-gray-900 p-1 text-white rounded-md">
+          <a target="_blank" rel="noopener noreferrer" title="whatsapp" aria-label="share Features on whatsapp"
+            href="https://api.whatsapp.com/send?text=Features - http://127.0.0.1:8000/role-based-access-control-rbac-with-keycloak-in-react-frontend.html">
+            <i class="fab fa-whatsapp fa-2x" aria-hidden="true"></i>
+          </a>
+        </li>
+      </ul>
+      <ul>
+        <li class="bg-gray-900 p-1 text-white rounded-md">
+          <a target="_blank" rel="noopener noreferrer" title="telegram" aria-label="share Features on telegram"
+            href="https://telegram.me/share/url?text=Features&amp;url=http://127.0.0.1:8000/role-based-access-control-rbac-with-keycloak-in-react-frontend.html">
+            <i class="fab fa-telegram fa-2x" aria-hidden="true"></i>
+          </a>
+        </li>
+      </ul>
+    </div>
+  </footer>
+  <div>
+  </div>
+</main>
+
+    </div>
+    <footer class="flex w-full text-xs justify-center mt-10 mb-6 text-zinc-600 dark:text-zinc-400">
+        <div class="px-4">
+            <span>©2024&nbsp;&#8226;&nbsp;</span>Powered by
+            <a class="underline" href="https://getpelican.com/">Pelican</a>&nbsp;&
+            <a class="underline" href="https://github.com/aleylara/Papyrus">Papyrus</a>
+        </div>
+    </footer>
+
+
+    <script>
+        let themeToggleDarkIcon = document.getElementById('theme-toggle-dark-icon');
+        let themeToggleLightIcon = document.getElementById('theme-toggle-light-icon');
+        if (localStorage.getItem('color-theme') === 'dark' || (!('color-theme' in localStorage) && window.matchMedia(
+                '(prefers-color-scheme: dark)').matches)) {
+            themeToggleLightIcon.classList.remove('hidden');
+        } else {
+            themeToggleDarkIcon.classList.remove('hidden');
+        }
+        let themeToggleBtn = document.getElementById('theme-toggle');
+        themeToggleBtn.addEventListener('click', function () {
+            themeToggleDarkIcon.classList.toggle('hidden');
+            themeToggleLightIcon.classList.toggle('hidden');
+            if (localStorage.getItem('color-theme')) {
+                if (localStorage.getItem('color-theme') === 'light') {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('color-theme', 'dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('color-theme', 'light');
+                }
+            } else {
+                if (document.documentElement.classList.contains('dark')) {
+                    document.documentElement.classList.remove('dark');
+                    localStorage.setItem('color-theme', 'light');
+                } else {
+                    document.documentElement.classList.add('dark');
+                    localStorage.setItem('color-theme', 'dark');
+                }
+            }
+        });
+    </script>
+</body>
+
+</html>
