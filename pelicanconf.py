@@ -1,6 +1,6 @@
 AUTHOR = 'Leon Ramzews'
 SITENAME = 'Road to Dev'
-SITEURL = ""
+SITEURL = 'https://julianrotti.github.io'
 
 PATH = "content"
 
