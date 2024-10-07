@@ -687,12 +687,14 @@
 &lt;h4&gt;Login/Logout Button&lt;/h4&gt;
 &lt;p&gt;Since both the Login/Logout button and user information will be placed in the Sidebar, these components are stored in the &lt;code&gt;components/Sidebar/&lt;/code&gt; folder.&lt;/p&gt;
 &lt;p&gt;To implement the &lt;code&gt;KeycloakButton&lt;/code&gt; for logging in and out, we utilize the &lt;code&gt;login&lt;/code&gt; and &lt;code&gt;logout&lt;/code&gt; service functions from the Keycloak service, along with the authentication state from the context provider.&lt;/p&gt;
-&lt;p&gt;Here's how it works:
-- The button fetches the &lt;code&gt;isAuthenticated&lt;/code&gt; state from the &lt;code&gt;AuthContext&lt;/code&gt;, which determines if the user is currently logged in.
-- A &lt;code&gt;handleButtonClick&lt;/code&gt; function is defined, which checks the user's authentication state:
-  - If the user is logged in, it calls the &lt;code&gt;logoutKeycloak&lt;/code&gt; function to log them out.
-  - If the user is not logged in, it calls the &lt;code&gt;loginKeycloak&lt;/code&gt; function to initiate the login process.
-- The button dynamically renders "Login" or "Logout" based on the user's authentication status and executes the appropriate action when clicked.&lt;/p&gt;
+&lt;p&gt;Here's how it works:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;The button fetches the &lt;code&gt;isAuthenticated&lt;/code&gt; state from the &lt;code&gt;AuthContext&lt;/code&gt;, which determines if the user is currently logged in&lt;/li&gt;
+&lt;li&gt;A &lt;code&gt;handleButtonClick&lt;/code&gt; function is defined, which checks the user's authentication state:&lt;/li&gt;
+&lt;li&gt;If the user is logged in, it calls the &lt;code&gt;logoutKeycloak&lt;/code&gt; function to log them out&lt;/li&gt;
+&lt;li&gt;If the user is not logged in, it calls the &lt;code&gt;loginKeycloak&lt;/code&gt; function to initiate the login process&lt;/li&gt;
+&lt;li&gt;The button dynamically renders "Login" or "Logout" based on the user's authentication status and executes the appropriate action when clicked&lt;/li&gt;
+&lt;/ul&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="k"&gt;import&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;React&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;useContext&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kr"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;"react"&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;span class="k"&gt;import&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;loginKeycloak&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;logoutKeycloak&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kr"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;"../../services/keycloak.js"&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;span class="k"&gt;import&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;AuthContext&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kr"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;"../../contexts/AuthContext.js"&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
@@ -713,11 +715,13 @@
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;h4&gt;Displaying User Information&lt;/h4&gt;
 &lt;p&gt;In &lt;code&gt;components/Sidebar/UserInfo.js&lt;/code&gt;, we define a component to display the current user's username and roles. This component leverages the &lt;code&gt;AuthContext&lt;/code&gt; to access the authentication state and the &lt;code&gt;getUsernameAndRoles&lt;/code&gt; helper function from the Keycloak service.&lt;/p&gt;
-&lt;p&gt;Here&amp;rsquo;s how the component works:
-- It first retrieves the &lt;code&gt;isAuthenticated&lt;/code&gt; state from &lt;code&gt;AuthContext&lt;/code&gt; to check if the user is logged in.
-- If the user is not authenticated, the component returns &lt;code&gt;null&lt;/code&gt; and does not display anything.
-- If the user is authenticated, it calls the &lt;code&gt;getUsernameAndRoles&lt;/code&gt; function, which fetches the username and filters the user&amp;rsquo;s roles based on the provided role list (e.g., &lt;code&gt;editor&lt;/code&gt;, &lt;code&gt;viewer&lt;/code&gt;).
-- The component then displays the username and the user's roles, formatted as a comma-separated list.&lt;/p&gt;
+&lt;p&gt;Here&amp;rsquo;s how the component works:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;It first retrieves the &lt;code&gt;isAuthenticated&lt;/code&gt; state from &lt;code&gt;AuthContext&lt;/code&gt; to check if the user is logged in&lt;/li&gt;
+&lt;li&gt;If the user is not authenticated, the component returns &lt;code&gt;null&lt;/code&gt; and does not display anything&lt;/li&gt;
+&lt;li&gt;If the user is authenticated, it calls the &lt;code&gt;getUsernameAndRoles&lt;/code&gt; function, which fetches the username and filters the user&amp;rsquo;s roles based on the provided role list (e.g., &lt;code&gt;editor&lt;/code&gt;, &lt;code&gt;viewer&lt;/code&gt;)&lt;/li&gt;
+&lt;li&gt;The component then displays the username and the user's roles, formatted as a comma-separated list&lt;/li&gt;
+&lt;/ul&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="k"&gt;import&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;React&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;useContext&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kr"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;"react"&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;span class="k"&gt;import&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;getUsernameAndRoles&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kr"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;"../../services/keycloak.js"&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;span class="k"&gt;import&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;AuthContext&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kr"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s2"&gt;"../../contexts/AuthContext.js"&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
@@ -788,16 +792,20 @@
 &lt;span class="k"&gt;export&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="k"&gt;default&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;routes&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;h3&gt;Using Keycloak Components&lt;/h3&gt;
-&lt;p&gt;There are two main areas where RBAC is applied:
-1. Routing: Protecting entire pages based on the user&amp;rsquo;s roles
-2. Sidebar: Displaying accessible links and login/logout buttons&lt;/p&gt;
+&lt;p&gt;There are two main areas where RBAC is applied:&lt;/p&gt;
+&lt;ol&gt;
+&lt;li&gt;Routing: Protecting entire pages based on the user&amp;rsquo;s roles&lt;/li&gt;
+&lt;li&gt;Sidebar: Displaying accessible links and login/logout buttons&lt;/li&gt;
+&lt;/ol&gt;
 &lt;h4&gt;Routing&lt;/h4&gt;
 &lt;p&gt;In &lt;code&gt;routes/AppRoutes.js&lt;/code&gt;, role-based access control is applied to each route using the &lt;code&gt;AccessControl&lt;/code&gt; component. This ensures that only users with the required roles can access specific pages. &lt;/p&gt;
-&lt;p&gt;Here&amp;rsquo;s how it works:
-- The component maps through the routes defined in &lt;code&gt;RouteConfig.js&lt;/code&gt;
-- For each route, the &lt;code&gt;AccessControl&lt;/code&gt; component is wrapped around the page's corresponding component, ensuring that access is restricted based on the roles specified for that route
-- The &lt;code&gt;redirect={true}&lt;/code&gt; prop is passed to &lt;code&gt;AccessControl&lt;/code&gt;. If the user lacks the necessary roles, they are automatically redirected to a "No Access" page, preventing unauthorized access
-- The component uses &lt;code&gt;Suspense&lt;/code&gt; to handle dynamic imports, displaying a fallback loading state while the route components are being fetched&lt;/p&gt;
+&lt;p&gt;Here&amp;rsquo;s how it works:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;The component maps through the routes defined in &lt;code&gt;RouteConfig.js&lt;/code&gt;&lt;/li&gt;
+&lt;li&gt;For each route, the &lt;code&gt;AccessControl&lt;/code&gt; component is wrapped around the page's corresponding component, ensuring that access is restricted based on the roles specified for that route&lt;/li&gt;
+&lt;li&gt;The &lt;code&gt;redirect={true}&lt;/code&gt; prop is passed to &lt;code&gt;AccessControl&lt;/code&gt;. If the user lacks the necessary roles, they are automatically redirected to a "No Access" page, preventing unauthorized access&lt;/li&gt;
+&lt;li&gt;The component uses &lt;code&gt;Suspense&lt;/code&gt; to handle dynamic imports, displaying a fallback loading state while the route components are being fetched&lt;/li&gt;
+&lt;/ul&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="k"&gt;import&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;React&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;Suspense&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kr"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s1"&gt;'react'&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;span class="k"&gt;import&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;Routes&lt;/span&gt;&lt;span class="p"&gt;,&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;Route&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kr"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s1"&gt;'react-router-dom'&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;span class="k"&gt;import&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;routes&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kr"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s1"&gt;'./RouteConfig.js'&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
@@ -825,12 +833,14 @@
 &lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;
 &lt;h4&gt;Displaying Pages in a Sidebar&lt;/h4&gt;
 &lt;p&gt;In &lt;code&gt;components/Sidebar/Sidebar.js&lt;/code&gt;, we implement a simple sidebar that integrates the &lt;code&gt;UserInfo&lt;/code&gt; and &lt;code&gt;KeycloakButton&lt;/code&gt; components, alongside navigation links for available routes. The sidebar ensures role-based access control by wrapping each route link in the &lt;code&gt;AccessControl&lt;/code&gt; component.&lt;/p&gt;
-&lt;p&gt;Here&amp;rsquo;s how it works:
-- The sidebar iterates over the routes defined in &lt;code&gt;RouteConfig.js&lt;/code&gt;. For each route, it checks if the route should be visible (i.e., not hidden)
-- Each visible route is rendered as a link using &lt;code&gt;Link&lt;/code&gt; from &lt;code&gt;react-router-dom&lt;/code&gt;. However, before the link is displayed, it&amp;rsquo;s wrapped in the &lt;code&gt;AccessControl&lt;/code&gt; component, which checks whether the user has the required roles to access the route
-- The &lt;code&gt;KeycloakButton&lt;/code&gt; is included for login/logout functionality, dynamically switching between "Login" and "Logout" depending on the user&amp;rsquo;s authentication state
-- The &lt;code&gt;UserInfo&lt;/code&gt; component displays the current user's username and roles, provided they are authenticated
-- The sidebar is split into two sections: the navigation links, login/logout button, and user info are displayed on the left, while the main content (passed as &lt;code&gt;children&lt;/code&gt;) is displayed on the right&lt;/p&gt;
+&lt;p&gt;Here&amp;rsquo;s how it works:&lt;/p&gt;
+&lt;ul&gt;
+&lt;li&gt;The sidebar iterates over the routes defined in &lt;code&gt;RouteConfig.js&lt;/code&gt;. For each route, it checks if the route should be visible (i.e., not hidden)&lt;/li&gt;
+&lt;li&gt;Each visible route is rendered as a link using &lt;code&gt;Link&lt;/code&gt; from &lt;code&gt;react-router-dom&lt;/code&gt;. However, before the link is displayed, it&amp;rsquo;s wrapped in the &lt;code&gt;AccessControl&lt;/code&gt; component, which checks whether the user has the required roles to access the route&lt;/li&gt;
+&lt;li&gt;The &lt;code&gt;KeycloakButton&lt;/code&gt; is included for login/logout functionality, dynamically switching between "Login" and "Logout" depending on the user&amp;rsquo;s authentication state&lt;/li&gt;
+&lt;li&gt;The &lt;code&gt;UserInfo&lt;/code&gt; component displays the current user's username and roles, provided they are authenticated&lt;/li&gt;
+&lt;li&gt;The sidebar is split into two sections: the navigation links, login/logout button, and user info are displayed on the left, while the main content (passed as &lt;code&gt;children&lt;/code&gt;) is displayed on the right&lt;/li&gt;
+&lt;/ul&gt;
 &lt;div class="highlight"&gt;&lt;pre&gt;&lt;span&gt;&lt;/span&gt;&lt;code&gt;&lt;span class="k"&gt;import&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;React&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kr"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s1"&gt;'react'&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;span class="k"&gt;import&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;{&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;Link&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="p"&gt;}&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kr"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s1"&gt;'react-router-dom'&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
 &lt;span class="k"&gt;import&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="nx"&gt;routes&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="kr"&gt;from&lt;/span&gt;&lt;span class="w"&gt; &lt;/span&gt;&lt;span class="s1"&gt;'../../routes/RouteConfig.js'&lt;/span&gt;&lt;span class="p"&gt;;&lt;/span&gt;
