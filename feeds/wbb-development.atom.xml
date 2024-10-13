@@ -6,7 +6,7 @@
 &lt;li&gt;Embedded Keycloak into a simple React frontend so that users can log in and out via a button,&lt;/li&gt;
 &lt;li&gt;Implemented role-based access control (RBAC), ensuring that certain pages or components in the frontend are only accessible to users with the appropriate roles.&lt;/li&gt;
 &lt;/ul&gt;
-&lt;p&gt;A minimal working example is available here: &lt;a href="https://github.com/JulianRotti/keycloak-react"&gt;https://github.com/JulianRotti/keycloak-react&lt;/a&gt;.&lt;/p&gt;
+&lt;p&gt;A minimal working example is available here: &lt;a href="https://github.com/JulianRotti/keycloak-sample-project"&gt;https://github.com/JulianRotti/keycloak-sample-project&lt;/a&gt;. Choose the branch &lt;code&gt;frontend-integration&lt;/code&gt; for both the main project &lt;code&gt;keycloak-sample-project&lt;/code&gt; and the submodule &lt;code&gt;keycloak-react&lt;/code&gt;.&lt;/p&gt;
 &lt;hr/&gt;
 &lt;h2 id="setting-up-keycloak"&gt;Setting Up Keycloak&lt;/h2&gt;
 &lt;h3&gt;Installing Keycloak with Docker&lt;/h3&gt;
