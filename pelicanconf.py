@@ -33,7 +33,7 @@ PAGINATED_TEMPLATES = {'index': None, 'tag': None, 'category': None, 'author': N
 # SEARCH_HTML_SELECTOR = "main"
 # Table of Content Plugin
 TOC = {
-    'TOC_HEADERS'       : '^h[1-3]', # What headers should be included in
+    'TOC_HEADERS'       : '^h[2]',   # What headers should be included in
                                      # the generated toc
                                      # Expected format is a regular expression
     'TOC_RUN'           : 'true',    # Default value for toc generation,
