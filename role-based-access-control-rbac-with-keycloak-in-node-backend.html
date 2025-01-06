@@ -214,72 +214,108 @@
 </ul>
 <hr/>
 <h3>Keycloak Middleware</h3>
-<p>The next step was setting up Keycloak middleware for authentication and RBAC. I used the <code>keycloak-connect</code> package for this. The middleware is configured in <code>middleware/authMiddleware.js</code> and is responsible for initializing Keycloak and protecting routes.</p>
-<p>To set up Keycloak interactions, I started by importing the <code>keycloak-connect</code> package:</p>
-<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nx">Keycloak</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'keycloak-connect'</span><span class="p">;</span>
-</code></pre></div>
-<h4>Keycloak Configuration</h4>
+<p>The next step was setting up Keycloak middleware for authentication and RBAC. I used a combination of <code>axios</code> and <code>jose</code> for this as the adapter <code>keycloak-connect</code> is deprecated. The middleware is configured in <code>middleware/authMiddleware.js</code> and the validation logic is implemented in <code>middleware/validationMiddleware.js</code>.</p>
+<h4>Token and Public Key Extraction</h4>
+<p>In <code>authMiddleware.js</code>, the logic to extract the token from incoming requests and to extract the public key from the Keycloak instance is implemented. These two steps are essential to verify whether the token in the request is legitimate&mdash;i.e., whether its signature matches the public key.</p>
 <p>The configuration for Keycloak is stored in an <code>.env</code> file in the root directory. This allows for easy customization of the Keycloak URL, realm, and client ID.</p>
-<div class="highlight"><pre><span></span><code><span class="c1">// Config from .env file</span>
-<span class="kd">const</span><span class="w"> </span><span class="nx">keycloakConfig</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">url</span><span class="o">:</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">NODE_APP_KEYCLOAK_URL</span><span class="p">,</span>
-<span class="w">    </span><span class="nx">realm</span><span class="o">:</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">NODE_APP_KEYCLOAK_REALM</span><span class="p">,</span>
-<span class="w">    </span><span class="nx">clientId</span><span class="o">:</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">NODE_APP_KEYCLOAK_CLIENT_ID</span>
-<span class="p">};</span>
-
-<span class="c1">// Create a new Keycloak instance</span>
-<span class="kd">const</span><span class="w"> </span><span class="nx">keycloak</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">Keycloak</span><span class="p">(</span><span class="nx">keycloakConfig</span><span class="p">);</span>
+<p>To handle HTTP requests, <code>axios</code> is used for fetching the JWKS (JSON Web Key Set) URL from the Keycloak server. <code>jose</code> is used for handling JWTs (JSON Web Tokens), specifically for verifying token signatures.</p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nx">axios</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'axios'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">createRemoteJWKSet</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'jose'</span><span class="p">;</span>
 </code></pre></div>
-<h4>Initializing Keycloak</h4>
-<p>Since the backend receives tokens from the frontend, the Keycloak instance is initialized with <code>bearer-only: true</code>. This mode ensures that users authenticate using tokens, and the backend doesn&rsquo;t need to manage sessions.</p>
-<div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">keycloak</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="nx">Keycloak</span><span class="p">({},</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="s1">'realm'</span><span class="o">:</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">NODE_APP_KEYCLOAK_REALM</span><span class="p">,</span>
-<span class="w">    </span><span class="s1">'auth-server-url'</span><span class="o">:</span><span class="w"> </span><span class="sb">`</span><span class="si">${</span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">NODE_APP_KEYCLOAK_URL</span><span class="si">}</span><span class="sb">`</span><span class="p">,</span>
-<span class="w">    </span><span class="s1">'ssl-required'</span><span class="o">:</span><span class="w"> </span><span class="s1">'external'</span><span class="p">,</span>
-<span class="w">    </span><span class="s1">'resource'</span><span class="o">:</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">NODE_APP_KEYCLOAK_CLIENT_ID</span><span class="p">,</span>
-<span class="w">    </span><span class="s1">'confidential-port'</span><span class="o">:</span><span class="w"> </span><span class="mf">0</span><span class="p">,</span>
-<span class="w">    </span><span class="s1">'bearer-only'</span><span class="o">:</span><span class="w"> </span><span class="kc">true</span>
-<span class="p">});</span>
-</code></pre></div>
-<h3>Protecting Routes with Roles</h3>
-<p>For role-based access control (RBAC), I created a helper function <code>protectWithRole</code> to protect routes based on user roles. This function abstracts the underlying Keycloak logic, making it easier to replace or modify the authentication provider in the future. By using <code>protectWithRole</code>, we only need to make changes in the middleware file if we decide to switch from Keycloak to another provider, rather than updating every route.</p>
-<div class="highlight"><pre><span></span><code><span class="c1">// Check if user has a specific role</span>
-<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">protectWithRole</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">role</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">keycloak</span><span class="p">.</span><span class="nx">protect</span><span class="p">(</span><span class="sb">`realm:</span><span class="si">${</span><span class="nx">role</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<p>Using <code>axios</code>, we fetch the JWKS URL, which contains the public keys needed to verify tokens issued by Keycloak.</p>
+<div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">getJwksUrl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">keycloakUrl</span><span class="p">,</span><span class="w"> </span><span class="nx">realm</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">wellKnownUrl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="sb">`</span><span class="si">${</span><span class="nx">keycloakUrl</span><span class="si">}</span><span class="sb">/realms/</span><span class="si">${</span><span class="nx">realm</span><span class="si">}</span><span class="sb">/.well-known/openid-configuration`</span><span class="p">;</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">data</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">axios</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">wellKnownUrl</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">data</span><span class="p">.</span><span class="nx">jwks_uri</span><span class="p">;</span>
 <span class="p">};</span>
 </code></pre></div>
-<p>This function ensures that only users with the appropriate roles can access certain routes, enhancing security in your Node backend.</p>
-<hr/>
-<h3>Using Keycloak in the Backend</h3>
-<h4>Initializing Keycloak in <code>index.js</code></h4>
-<p>To apply Keycloak globally, we need to initialize the middleware in our <code>index.js</code>. This ensures that all API routes are protected by Keycloak.</p>
-<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nx">express</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'express'</span><span class="p">;</span>
-<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">keycloak</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'./middleware/authMiddleware.js'</span><span class="p">;</span>
+<p>Next, the JWKS (a set of public keys) is fetched from the provided URL. The JWKS is crucial for validating the token's signature.</p>
+<div class="highlight"><pre><span></span><code><span class="cm">/**</span>
+<span class="cm"> * Fetch and prepare the JWKS for token validation</span>
+<span class="cm"> * @param {string} jwksUri - The URI of the JWKS</span>
+<span class="cm"> * @returns {object} - A Remote JWK Set object for token validation</span>
+<span class="cm"> */</span>
+<span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">getJwks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">jwksUri</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">response</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">axios</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="nx">jwksUri</span><span class="p">);</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">jwks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">response</span><span class="p">.</span><span class="nx">data</span><span class="p">;</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">createRemoteJWKSet</span><span class="p">(</span><span class="ow">new</span><span class="w"> </span><span class="nx">URL</span><span class="p">(</span><span class="nx">jwksUri</span><span class="p">));</span><span class="w"> </span><span class="c1">// Return a Remote JWK Set object for token validation</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="sb">`Failed to fetch JWKS: </span><span class="si">${</span><span class="nx">error</span><span class="p">.</span><span class="nx">message</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>Finally, a helper function is created to extract the bearer token issued by Keycloak from the <code>Authorization</code> header of the incoming request.</p>
+<div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">extractBearerToken</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">req</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">authHeader</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">req</span><span class="p">.</span><span class="nx">headers</span><span class="p">[</span><span class="s1">'authorization'</span><span class="p">];</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">authHeader</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nx">authHeader</span><span class="p">.</span><span class="nx">startsWith</span><span class="p">(</span><span class="s1">'Bearer '</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">return</span><span class="w"> </span><span class="nx">authHeader</span><span class="p">.</span><span class="nx">split</span><span class="p">(</span><span class="s1">' '</span><span class="p">)[</span><span class="mf">1</span><span class="p">];</span><span class="w"> </span><span class="c1">// Extract and return the token</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="s1">'Authorization token is missing or invalid.'</span><span class="p">);</span>
+<span class="p">};</span>
+</code></pre></div>
+<h4>Validating the Token and Role</h4>
+<p>In <code>validationMiddleware.js</code>, the extracted bearer token is validated. The <code>jwtVerify</code> function from <code>jose</code> is used, along with the helper functions defined in <code>authMiddleware.js</code>. The environment variables are also accessed using <code>dotenv</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">jwtVerify</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'jose'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">getJwksUrl</span><span class="p">,</span><span class="w"> </span><span class="nx">getJwks</span><span class="p">,</span><span class="w"> </span><span class="nx">extractBearerToken</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'./authMiddleware.js'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">dotenv</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'dotenv'</span><span class="p">;</span>
 
-<span class="kd">const</span><span class="w"> </span><span class="nx">app</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">express</span><span class="p">();</span>
+<span class="nx">dotenv</span><span class="p">.</span><span class="nx">config</span><span class="p">();</span>
 
-<span class="c1">// Initialize Keycloak globally</span>
-<span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">keycloak</span><span class="p">.</span><span class="nx">middleware</span><span class="p">());</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">keycloakUrl</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">NODE_APP_KEYCLOAK_URL</span><span class="p">;</span>
+<span class="kd">const</span><span class="w"> </span><span class="nx">realm</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">NODE_APP_KEYCLOAK_REALM</span><span class="p">;</span>
+</code></pre></div>
+<p>To validate whether the bearer token has a valid signature, the token and the JWKS are passed into <code>jwtVerify</code>. If the token is valid, the payload (which contains user information, including roles) is saved in <code>req.user</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">validateToken</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">async</span><span class="w"> </span><span class="p">(</span><span class="nx">req</span><span class="p">,</span><span class="w"> </span><span class="nx">res</span><span class="p">,</span><span class="w"> </span><span class="nx">next</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">extractBearerToken</span><span class="p">(</span><span class="nx">req</span><span class="p">);</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">jwksUri</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">getJwksUrl</span><span class="p">(</span><span class="nx">keycloakUrl</span><span class="p">,</span><span class="w"> </span><span class="nx">realm</span><span class="p">);</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="nx">jwks</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">getJwks</span><span class="p">(</span><span class="nx">jwksUri</span><span class="p">);</span>
 
-<span class="c1">// Start the server</span>
-<span class="kd">const</span><span class="w"> </span><span class="nx">PORT</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">process</span><span class="p">.</span><span class="nx">env</span><span class="p">.</span><span class="nx">PORT</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="mf">5000</span><span class="p">;</span>
-<span class="nx">app</span><span class="p">.</span><span class="nx">listen</span><span class="p">(</span><span class="nx">PORT</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="sb">`Server is running on port </span><span class="si">${</span><span class="nx">PORT</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
-<span class="p">});</span>
+<span class="w">        </span><span class="kd">const</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">payload</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="k">await</span><span class="w"> </span><span class="nx">jwtVerify</span><span class="p">(</span><span class="nx">token</span><span class="p">,</span><span class="w"> </span><span class="nx">jwks</span><span class="p">,</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">issuer</span><span class="o">:</span><span class="w"> </span><span class="sb">`</span><span class="si">${</span><span class="nx">keycloakUrl</span><span class="si">}</span><span class="sb">/realms/</span><span class="si">${</span><span class="nx">realm</span><span class="si">}</span><span class="sb">`</span>
+<span class="w">        </span><span class="p">});</span>
+
+<span class="w">        </span><span class="nx">req</span><span class="p">.</span><span class="nx">user</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">payload</span><span class="p">;</span><span class="w"> </span>
+<span class="w">        </span><span class="nx">next</span><span class="p">();</span>
+<span class="w">    </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span><span class="p">(</span><span class="mf">401</span><span class="p">).</span><span class="nx">json</span><span class="p">({</span><span class="w"> </span><span class="nx">error</span><span class="o">:</span><span class="w"> </span><span class="sb">`Unauthorized: </span><span class="si">${</span><span class="nx">error</span><span class="p">.</span><span class="nx">message</span><span class="si">}</span><span class="sb">`</span><span class="w"> </span><span class="p">});</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>After successful token validation, the user's role is stored in <code>req.user</code> and can be checked against the required role. This ensures that only users with the appropriate role can access protected routes.</p>
+<div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">validateRole</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">requiredRole</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">(</span><span class="nx">req</span><span class="p">,</span><span class="w"> </span><span class="nx">res</span><span class="p">,</span><span class="w"> </span><span class="nx">next</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="k">try</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="kd">const</span><span class="w"> </span><span class="nx">roles</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">req</span><span class="p">.</span><span class="nx">user</span><span class="o">?</span><span class="p">.</span><span class="nx">realm_access</span><span class="o">?</span><span class="p">.</span><span class="nx">roles</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="p">[];</span>
+<span class="w">            </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">roles</span><span class="p">.</span><span class="nx">includes</span><span class="p">(</span><span class="nx">requiredRole</span><span class="p">))</span><span class="w"> </span><span class="p">{</span>
+<span class="w">                </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="sb">`Missing required role: </span><span class="si">${</span><span class="nx">requiredRole</span><span class="si">}</span><span class="sb">`</span><span class="p">);</span>
+<span class="w">            </span><span class="p">}</span>
+<span class="w">            </span><span class="nx">next</span><span class="p">();</span><span class="w"> </span><span class="c1">// Role is valid, proceed</span>
+<span class="w">        </span><span class="p">}</span><span class="w"> </span><span class="k">catch</span><span class="w"> </span><span class="p">(</span><span class="nx">error</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">            </span><span class="nx">res</span><span class="p">.</span><span class="nx">status</span><span class="p">(</span><span class="mf">403</span><span class="p">).</span><span class="nx">json</span><span class="p">({</span><span class="w"> </span><span class="nx">error</span><span class="o">:</span><span class="w"> </span><span class="sb">`Forbidden: </span><span class="si">${</span><span class="nx">error</span><span class="p">.</span><span class="nx">message</span><span class="si">}</span><span class="sb">`</span><span class="w"> </span><span class="p">});</span>
+<span class="w">        </span><span class="p">}</span>
+<span class="w">    </span><span class="p">};</span>
+<span class="p">};</span>
+</code></pre></div>
+<p>For simplicity, I combined token and role validation into a single function.</p>
+<div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">const</span><span class="w"> </span><span class="nx">validateTokenAndRole</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">(</span><span class="nx">requiredRole</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">[</span><span class="nx">validateToken</span><span class="p">,</span><span class="w"> </span><span class="nx">validateRole</span><span class="p">(</span><span class="nx">requiredRole</span><span class="p">)];</span>
+<span class="p">}</span>
 </code></pre></div>
 <h3>Protecting API Routes with RBAC</h3>
 <p>In the <code>routes/AppRoutes.js</code> file, we define our API routes and apply role-based protection. In this example, only users with the <code>viewer</code> role can access the <code>get-data</code> endpoint.</p>
 <div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nx">express</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'express'</span><span class="p">;</span>
-<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">protectWithRole</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'../middleware/authMiddleware.js'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">validateTokenAndRole</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'../middleware/validationMiddleware.js'</span><span class="p">;</span>
 <span class="c1">// Add your controller import here (e.g., appController)</span>
 
 <span class="kd">const</span><span class="w"> </span><span class="nx">router</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">express</span><span class="p">.</span><span class="nx">Router</span><span class="p">();</span>
 
-<span class="nx">router</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'/get-data/:id'</span><span class="p">,</span><span class="w"> </span><span class="nx">protectWithRole</span><span class="p">(</span><span class="s1">'viewer'</span><span class="p">),</span><span class="w"> </span><span class="nx">appController</span><span class="p">.</span><span class="nx">getDataById</span><span class="p">);</span>
+<span class="nx">router</span><span class="p">.</span><span class="nx">get</span><span class="p">(</span><span class="s1">'/get-data/:id'</span><span class="p">,</span><span class="w"> </span><span class="nx">validateTokenAndRole</span><span class="p">(</span><span class="s1">'viewer'</span><span class="p">),</span><span class="w"> </span><span class="nx">appController</span><span class="p">.</span><span class="nx">getDataById</span><span class="p">);</span>
 
 <span class="k">export</span><span class="w"> </span><span class="k">default</span><span class="w"> </span><span class="nx">router</span><span class="p">;</span>
 </code></pre></div>
-<p>In this setup, if a user tries to access the <code>/get-data/:id</code> route without the appropriate role (<code>viewer</code> in this case), they will receive an "Access Denied" error.</p>
+<p>In this setup, if a user tries to access the <code>/get-data/:id</code> route without the appropriate role (<code>viewer</code> in this case), they will receive a "Forbidden" error.</p>
 <blockquote>
 <p><strong>Note</strong>: This is all we need to do in order to integrate Keycloak into the backend for role-based access control. To test this, I will now complete the remaining code to provide the models, services, controllers, and routes, which can be used to fetch data and test role-based protection in practice.</p>
 </blockquote>
@@ -437,20 +473,16 @@
 
 <span class="k">import</span><span class="w"> </span><span class="nx">express</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'express'</span><span class="p">;</span>
 <span class="k">import</span><span class="w"> </span><span class="nx">AppRoutes</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'./routes/AppRoutes.js'</span><span class="p">;</span>
-<span class="k">import</span><span class="w"> </span><span class="nx">cors</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'cors'</span><span class="p">;</span><span class="w">  </span><span class="c1">// Import CORS middleware</span>
-<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">keycloak</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'./middleware/authMiddleware.js'</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">cors</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s1">'cors'</span><span class="p">;</span>
 
 <span class="kd">const</span><span class="w"> </span><span class="nx">app</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">express</span><span class="p">();</span>
-
-<span class="c1">// initialize Keycloak globally</span>
-<span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">keycloak</span><span class="p">.</span><span class="nx">middleware</span><span class="p">());</span>
 
 <span class="c1">// Middleware</span>
 <span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">express</span><span class="p">.</span><span class="nx">json</span><span class="p">());</span>
 
 <span class="c1">// Enable CORS for requests from http://localhost:3000 (React frontend)</span>
 <span class="nx">app</span><span class="p">.</span><span class="nx">use</span><span class="p">(</span><span class="nx">cors</span><span class="p">({</span>
-<span class="w">    </span><span class="nx">origin</span><span class="o">:</span><span class="w"> </span><span class="s1">'http://localhost:3000'</span><span class="p">,</span><span class="w">  </span><span class="c1">// Allow only your frontend</span>
+<span class="w">    </span><span class="nx">origin</span><span class="o">:</span><span class="w"> </span><span class="s1">'http://localhost:3000'</span><span class="p">,</span>
 <span class="p">}));</span>
 
 <span class="c1">// Routes</span>
